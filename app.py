@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request
 import pickle
 import numpy as np
 import pandas as pd
@@ -8,13 +8,12 @@ app = Flask(__name__)
 
 # Cargar modelo
 with open('titanic_model.pkl', 'rb') as f:
-    data = pickle.load(f)
-    model = data['model']
-    pca = data['pca']
-    scaler = data['scaler']
-    sex_encoder = data['sex_encoder']
-    deck_encoder = data['deck_encoder']  # AÑADE ESTO
-    features = data['features']
+    model_data = pickle.load(f)
+    model = model_data['model']
+    pca = model_data['pca']
+    scaler = model_data['scaler']
+    encoders = model_data['encoders']
+    feature_order = model_data['feature_order']
 
 @app.route('/')
 def home():
@@ -23,43 +22,37 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        # Obtener datos del formulario
-        input_data = {
-            'Pclass': int(request.form['Pclass']),
-            'Age': float(request.form['Age']),
-            'Fare': float(request.form['Fare']),
-            'Sex': request.form['Sex'],
-            'Deck': request.form['Deck'].upper()  # Asegurar mayúsculas
-        }
-
-        # Preprocesamiento
-        sex_encoded = sex_encoder.transform([[input_data['Sex']]])[0][0]  # Corregido
-        deck_encoded = deck_encoder.transform([[input_data['Deck']]])[0][0]  # Nuevo
+        # 1. Obtener datos del formulario
+        form_data = request.form
         
-        # Construir array de características en el ORDEN CORRECTO
-        X = np.array([
-            input_data['Pclass'],
-            input_data['Age'],
-            input_data['Fare'],
+        # 2. Preprocesamiento idéntico al entrenamiento
+        sex_encoded = encoders['sex'].transform([[form_data['Sex']]])[0][0]
+        deck_encoded = encoders['deck'].transform([[form_data['Deck'].upper()]])[0][0]
+        
+        # 3. Crear array de entrada en el orden correcto
+        input_values = [
+            float(form_data['Pclass']),
+            float(form_data['Age']),
+            float(form_data['Fare']),
             sex_encoded,
-            deck_encoded  # Usar el valor codificado
-        ]).reshape(1, -1)
+            deck_encoded
+        ]
         
-        # Convertir a DataFrame para mantener nombres de características
-        X_df = pd.DataFrame(X, columns=features)
+        # 4. Convertir a DataFrame manteniendo el orden de features
+        input_df = pd.DataFrame([input_values], columns=feature_order)
         
-        # Escalar y aplicar PCA
-        X_scaled = scaler.transform(X_df)
-        X_pca = pca.transform(X_scaled)
+        # 5. Aplicar transformaciones
+        scaled_data = scaler.transform(input_df)
+        pca_data = pca.transform(scaled_data)
         
-        # Predecir
-        prediction = model.predict(X_pca)[0]
+        # 6. Predecir
+        prediction = model.predict(pca_data)[0]
         result = "Sobrevivió" if prediction == 1 else "No sobrevivió"
         
         return render_template('form.html', prediction=result)
     
     except Exception as e:
-        return render_template('form.html', error=str(e))
+        return render_template('form.html', error=f"Error: {str(e)}")
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

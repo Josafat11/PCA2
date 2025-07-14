@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Predicción de Supervivencia en el Titanic</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Playfair+Display:wght@700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --primary: #2c3e50;
@@ -15,13 +18,13 @@
             --success: #27ae60;
             --warning: #f39c12;
         }
-        
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
-        
+
         body {
             font-family: 'Montserrat', sans-serif;
             line-height: 1.6;
@@ -29,7 +32,7 @@
             background-color: #f5f7fa;
             padding: 20px;
         }
-        
+
         .container {
             max-width: 800px;
             margin: 0 auto;
@@ -38,41 +41,42 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
-        
+
         header {
             background: var(--primary);
             color: white;
             padding: 30px 20px;
             text-align: center;
         }
-        
+
         h1 {
             font-family: 'Playfair Display', serif;
             font-size: 2.2rem;
             margin-bottom: 10px;
         }
-        
+
         .subtitle {
             font-size: 1rem;
             opacity: 0.9;
         }
-        
+
         .form-container {
             padding: 30px;
         }
-        
+
         .form-group {
             margin-bottom: 20px;
         }
-        
+
         label {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
             color: var(--secondary);
         }
-        
-        input, select {
+
+        input,
+        select {
             width: 100%;
             padding: 12px 15px;
             border: 1px solid #ddd;
@@ -80,13 +84,14 @@
             font-size: 16px;
             transition: border 0.3s;
         }
-        
-        input:focus, select:focus {
+
+        input:focus,
+        select:focus {
             border-color: var(--primary);
             outline: none;
             box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.1);
         }
-        
+
         button {
             background: var(--accent);
             color: white;
@@ -101,11 +106,11 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        
+
         button:hover {
             background: #c0392b;
         }
-        
+
         .result-container {
             margin-top: 30px;
             padding: 20px;
@@ -113,28 +118,28 @@
             text-align: center;
             animation: fadeIn 0.5s ease-in-out;
         }
-        
+
         .survived {
             background-color: rgba(39, 174, 96, 0.1);
             border-left: 5px solid var(--success);
         }
-        
+
         .not-survived {
             background-color: rgba(231, 76, 60, 0.1);
             border-left: 5px solid var(--accent);
         }
-        
+
         .result-title {
             font-weight: 600;
             margin-bottom: 10px;
             font-size: 1.2rem;
         }
-        
+
         .result-message {
             font-size: 1.5rem;
             font-weight: 700;
         }
-        
+
         .error {
             color: var(--accent);
             background-color: rgba(231, 76, 60, 0.1);
@@ -143,7 +148,7 @@
             margin-top: 20px;
             border-left: 5px solid var(--accent);
         }
-        
+
         .titanic-image {
             width: 100%;
             max-height: 200px;
@@ -151,40 +156,49 @@
             margin-bottom: 20px;
             border-radius: 5px;
         }
-        
+
         footer {
             text-align: center;
             margin-top: 30px;
             color: #7f8c8d;
             font-size: 0.9rem;
         }
-        
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
+
         @media (max-width: 600px) {
             .container {
                 border-radius: 0;
             }
-            
+
             h1 {
                 font-size: 1.8rem;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
             <h1>¿Hubieras sobrevivido en el Titanic?</h1>
             <p class="subtitle">Un análisis predictivo basado en datos históricos</p>
         </header>
-        
+
         <div class="form-container">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/RMS_Titanic_3.jpg/1200px-RMS_Titanic_3.jpg" alt="RMS Titanic" class="titanic-image">
-            
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/RMS_Titanic_3.jpg/1200px-RMS_Titanic_3.jpg"
+                alt="RMS Titanic" class="titanic-image">
+
             <form method="POST" action="/predict">
                 <div class="form-group">
                     <label for="Pclass">Clase de Pasajero</label>
@@ -195,17 +209,18 @@
                         <option value="3">Tercera Clase</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="Age">Edad</label>
-                    <input type="number" id="Age" name="Age" min="0" max="100" step="0.1" placeholder="Ej: 25.5" required>
+                    <input type="number" id="Age" name="Age" min="0" max="100" step="0.1" placeholder="Ej: 25.5"
+                        required>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="Fare">Tarifa Pagada ($)</label>
                     <input type="number" id="Fare" name="Fare" min="0" step="0.01" placeholder="Ej: 32.50" required>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="Sex">Género</label>
                     <select id="Sex" name="Sex" required>
@@ -214,26 +229,26 @@
                         <option value="female">Femenino</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label for="Deck">Cubierta del Barco</label>
                     <select id="Deck" name="Deck" required>
                         <option value="">Selecciona tu cubierta</option>
-                        <option value="0">A</option>
-                        <option value="1">B</option>
-                        <option value="2">C</option>
-                        <option value="3">D</option>
-                        <option value="4">E</option>
-                        <option value="5">F</option>
-                        <option value="6">G</option>
-                        <option value="7">T</option>
-                        <option value="8">U (Desconocido)</option>
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                        <option value="G">G</option>
+                        <option value="T">T</option>
+                        <option value="U">U (Desconocido)</option>
                     </select>
                 </div>
-                
+
                 <button type="submit">Predecir Supervivencia</button>
             </form>
-            
+
             {% if prediction %}
             <div class="result-container {% if prediction == 'Sobrevivió' %}survived{% else %}not-survived{% endif %}">
                 <div class="result-title">Resultado de la predicción:</div>
@@ -247,7 +262,7 @@
                 </p>
             </div>
             {% endif %}
-            
+
             {% if error %}
             <div class="error">
                 <strong>Error:</strong> {{ error }}
@@ -256,9 +271,10 @@
             {% endif %}
         </div>
     </div>
-    
+
     <footer>
         <p>Modelo predictivo basado en datos históricos del RMS Titanic | Exactitud del modelo: 87.71%</p>
     </footer>
 </body>
+
 </html>
