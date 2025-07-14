@@ -14,7 +14,7 @@ pca = data['pca']
 scaler = data['scaler']
 sex_encoder = data['sex_encoder']
 deck_encoder = data['deck_encoder']
-features = data['features']
+features = data['feature_names']
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
