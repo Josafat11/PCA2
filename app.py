@@ -3,6 +3,7 @@ from flask import Flask, render_template, request
 import pickle
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
 
 app = Flask(__name__)
 
@@ -12,8 +13,9 @@ with open('titanic_model.pkl', 'rb') as f:
     model = model_data['model']
     pca = model_data['pca']
     scaler = model_data['scaler']
-    encoders = model_data['encoders']
-    feature_order = model_data['feature_order']
+    sex_encoder = model_data['sex_encoder']
+    deck_encoder = model_data['deck_encoder']
+    required_features = ['Pclass', 'Age', 'Fare', 'Sex_male', 'Deck']
 
 @app.route('/')
 def home():
@@ -22,42 +24,38 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        # 1. Obtener y validar datos del formulario
+        # 1. Obtener datos del formulario
         form_data = request.form
         
-        # 2. Preprocesamiento consistente con el entrenamiento
-        sex_encoded = encoders['sex'].transform([[form_data['Sex']]])[0][0]
-        deck_encoded = encoders['deck'].transform([[form_data['Deck'].upper()]])[0][0]
+        # 2. Preprocesamiento idéntico al entrenamiento
+        sex_encoded = sex_encoder.transform([[form_data['Sex']]])[0][0]
+        deck_encoded = deck_encoder.transform([[form_data['Deck'].upper()]])[0][0]
         
-        # 3. Crear array con EXACTAMENTE las mismas features usadas en entrenamiento
-        input_values = [
+        # 3. Crear DataFrame solo con las features usadas en el modelo final
+        input_data = pd.DataFrame([[
             float(form_data['Pclass']),
             float(form_data['Age']),
             float(form_data['Fare']),
             sex_encoded,
             deck_encoded
-        ]
+        ]], columns=required_features)
         
-        # 4. Crear DataFrame con las columnas en el ORDEN CORRECTO
-        input_df = pd.DataFrame([input_values], columns=feature_order)
+        # 4. Escalar solo estas 5 features (no todas las columnas como en entrenamiento)
+        scaler = StandardScaler()
+        scaler.mean_ = model_data['scaler'].mean_[:5]  # Solo las 5 features usadas
+        scaler.scale_ = model_data['scaler'].scale_[:5]  # Solo las 5 features usadas
         
-        # 5. Verificar que tenemos todas las features necesarias
-        missing_features = set(feature_order) - set(input_df.columns)
-        if missing_features:
-            raise ValueError(f"Faltan features: {missing_features}")
-        
-        # 6. Aplicar transformaciones en el mismo orden que en entrenamiento
-        X_scaled = scaler.transform(input_df[feature_order])  # Asegurar orden
+        X_scaled = scaler.transform(input_data)
         X_pca = pca.transform(X_scaled)
         
-        # 7. Predecir
+        # 5. Predecir
         prediction = model.predict(X_pca)[0]
         result = "Sobrevivió" if prediction == 1 else "No sobrevivió"
         
         return render_template('form.html', prediction=result)
     
     except Exception as e:
-        error_msg = f"Error: {str(e)}. Por favor verifica los datos e intenta nuevamente."
+        error_msg = f"Error: {str(e)}. Verifica que todos los campos estén completos y sean válidos."
         return render_template('form.html', error=error_msg)
 
 if __name__ == '__main__':
