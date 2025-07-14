@@ -2,6 +2,7 @@ import os
 from flask import Flask, render_template, request, jsonify
 import pickle
 import numpy as np
+import pandas as pd
 
 app = Flask(__name__)
 
@@ -12,6 +13,7 @@ with open('titanic_model.pkl', 'rb') as f:
     pca = data['pca']
     scaler = data['scaler']
     sex_encoder = data['sex_encoder']
+    deck_encoder = data['deck_encoder']  # AÑADE ESTO
     features = data['features']
 
 @app.route('/')
@@ -27,23 +29,27 @@ def predict():
             'Age': float(request.form['Age']),
             'Fare': float(request.form['Fare']),
             'Sex': request.form['Sex'],
-            'Deck': request.form['Deck']
+            'Deck': request.form['Deck'].upper()  # Asegurar mayúsculas
         }
 
         # Preprocesamiento
-        sex_encoded = sex_encoder.transform([[input_data['Sex']]])[0]
+        sex_encoded = sex_encoder.transform([[input_data['Sex']]])[0][0]  # Corregido
+        deck_encoded = deck_encoder.transform([[input_data['Deck']]])[0][0]  # Nuevo
         
-        # Construir array de características
+        # Construir array de características en el ORDEN CORRECTO
         X = np.array([
             input_data['Pclass'],
             input_data['Age'],
             input_data['Fare'],
             sex_encoded,
-            input_data['Deck']
+            deck_encoded  # Usar el valor codificado
         ]).reshape(1, -1)
         
+        # Convertir a DataFrame para mantener nombres de características
+        X_df = pd.DataFrame(X, columns=features)
+        
         # Escalar y aplicar PCA
-        X_scaled = scaler.transform(X)
+        X_scaled = scaler.transform(X_df)
         X_pca = pca.transform(X_scaled)
         
         # Predecir
