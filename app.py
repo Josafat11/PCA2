@@ -22,14 +22,14 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        # 1. Obtener datos del formulario
+        # 1. Obtener y validar datos del formulario
         form_data = request.form
         
-        # 2. Preprocesamiento idéntico al entrenamiento
+        # 2. Preprocesamiento consistente con el entrenamiento
         sex_encoded = encoders['sex'].transform([[form_data['Sex']]])[0][0]
         deck_encoded = encoders['deck'].transform([[form_data['Deck'].upper()]])[0][0]
         
-        # 3. Crear array de entrada en el orden correcto
+        # 3. Crear array con EXACTAMENTE las mismas features usadas en entrenamiento
         input_values = [
             float(form_data['Pclass']),
             float(form_data['Age']),
@@ -38,21 +38,27 @@ def predict():
             deck_encoded
         ]
         
-        # 4. Convertir a DataFrame manteniendo el orden de features
+        # 4. Crear DataFrame con las columnas en el ORDEN CORRECTO
         input_df = pd.DataFrame([input_values], columns=feature_order)
         
-        # 5. Aplicar transformaciones
-        scaled_data = scaler.transform(input_df)
-        pca_data = pca.transform(scaled_data)
+        # 5. Verificar que tenemos todas las features necesarias
+        missing_features = set(feature_order) - set(input_df.columns)
+        if missing_features:
+            raise ValueError(f"Faltan features: {missing_features}")
         
-        # 6. Predecir
-        prediction = model.predict(pca_data)[0]
+        # 6. Aplicar transformaciones en el mismo orden que en entrenamiento
+        X_scaled = scaler.transform(input_df[feature_order])  # Asegurar orden
+        X_pca = pca.transform(X_scaled)
+        
+        # 7. Predecir
+        prediction = model.predict(X_pca)[0]
         result = "Sobrevivió" if prediction == 1 else "No sobrevivió"
         
         return render_template('form.html', prediction=result)
     
     except Exception as e:
-        return render_template('form.html', error=f"Error: {str(e)}")
+        error_msg = f"Error: {str(e)}. Por favor verifica los datos e intenta nuevamente."
+        return render_template('form.html', error=error_msg)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
